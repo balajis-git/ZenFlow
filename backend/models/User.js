@@ -58,7 +58,7 @@ const userSchema = new mongoose.Schema(
     ],
     profileImage: {
       type: String,
-      default: 'http://localhost:5000/uploads/male_employee_photo.jpg',
+      default: 'http://localhost:5000/uploads/male_employee_avatar.jpg',
     },
     resumeUrl: {
       type: String,

@@ -62,7 +62,7 @@ const seedDatabase = async () => {
       joiningDate: new Date('2024-01-10'),
       phone: '+1 (555) 019-9000',
       emailVerified: true,
-      profileImage: 'http://localhost:5000/uploads/male_employee_photo.jpg',
+      profileImage: 'http://localhost:5000/uploads/male_employee_avatar.jpg',
       skills: ['Leadership', 'System Architecture', 'Governance'],
     });
 
@@ -92,7 +92,7 @@ const seedDatabase = async () => {
       joiningDate: new Date('2024-02-01'),
       phone: '+1 (555) 019-9002',
       emailVerified: true,
-      profileImage: 'http://localhost:5000/uploads/male_employee_photo.jpg',
+      profileImage: 'http://localhost:5000/uploads/male_employee_avatar.jpg',
       skills: ['Project Management', 'Agile', 'Scrum', 'Risk Mitigation'],
     });
 
@@ -107,7 +107,7 @@ const seedDatabase = async () => {
       joiningDate: new Date('2024-04-20'),
       phone: '+1 (555) 019-9003',
       emailVerified: true,
-      profileImage: 'http://localhost:5000/uploads/male_employee_photo.jpg',
+      profileImage: 'http://localhost:5000/uploads/male_employee_avatar.jpg',
       skills: ['React', 'Redux', 'CSS Grid', 'Tailwind', 'JavaScript'],
     });
 
