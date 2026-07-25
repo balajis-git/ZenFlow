@@ -50,6 +50,20 @@ exports.register = async (req, res, next) => {
       joiningDate,
     } = req.body;
 
+    const targetRole = role || 'Employee';
+
+    // Single Account Restriction for Admin, HR, and PM roles
+    const restrictedRoles = ['Super Admin', 'HR Admin', 'Project Manager'];
+    if (restrictedRoles.includes(targetRole)) {
+      const existingRoleUser = await User.findOne({ role: targetRole });
+      if (existingRoleUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'This role already has an account.',
+        });
+      }
+    }
+
     if (password && confirmPassword && password !== confirmPassword) {
       return res.status(400).json({ success: false, message: 'Passwords do not match' });
     }
@@ -60,6 +74,14 @@ exports.register = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+      });
+    }
+
+    // Phone Validation: 10 digits
+    if (phone && !/^\d{10}$/.test(phone.replace(/\D/g, ''))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number must be exactly 10 digits.',
       });
     }
 
@@ -94,60 +116,33 @@ exports.register = async (req, res, next) => {
       email,
       phone,
       password,
-      role: role || 'Employee',
+      role: targetRole,
       department: department || null,
-      designation: designation || 'Team Member',
-      skills: skills ? (typeof skills === 'string' ? JSON.parse(skills) : skills) : [],
-      experience: experience ? (typeof experience === 'string' ? JSON.parse(experience) : experience) : [],
+      designation: designation || (targetRole === 'Super Admin' ? 'CEO' : targetRole === 'HR Admin' ? 'HR Director' : targetRole === 'Project Manager' ? 'Lead PM' : 'Team Member'),
+      skills: skills ? (typeof skills === 'string' ? (skills.includes('[') ? JSON.parse(skills) : skills.split(',').map(s => s.trim())) : skills) : [],
+      experience: experience ? (typeof experience === 'string' ? (experience.includes('[') ? JSON.parse(experience) : []) : experience) : [],
       joiningDate: joiningDate || Date.now(),
       profileImage,
       resumeUrl,
-      status: 'Pending',
-      isApproved: false,
-      emailVerified: false,
+      status: 'Active',
+      isApproved: true,
+      emailVerified: true,
     });
 
-    // Send Registration Submitted Notification Email
-    try {
-      const emailHtml = `
-        <div style="font-family: Arial, sans-serif; background-color: #0f172a; padding: 40px; color: #f8fafc;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 16px; padding: 32px; border: 1px solid #334155;">
-            <div style="text-align: center; margin-bottom: 24px;">
-              <span style="font-size: 28px; font-weight: 900; color: #3b82f6;">ZenFlow</span>
-              <p style="color: #94a3b8; font-size: 14px; margin-top: 4px;">Enterprise Workforce Platform</p>
-            </div>
-            <h2 style="color: #ffffff; font-size: 20px; margin-bottom: 12px;">Registration Submitted</h2>
-            <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6;">Hi <strong>${user.name}</strong>,</p>
-            <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6;">Thank you for registering on ZenFlow. Your employee account (ID: <strong>${user.employeeId}</strong>) has been submitted successfully and is currently <strong>awaiting approval by HR Admin</strong>.</p>
-            <div style="background-color: #0f172a; border-radius: 12px; padding: 16px; margin: 24px 0; border: 1px solid #334155; text-align: center;">
-              <span style="color: #fbbf24; font-weight: bold; font-size: 14px;">Status: Awaiting HR Approval</span>
-            </div>
-            <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 32px;">© 2026 ZenFlow Platform. Where Teams Work Better.</p>
-          </div>
-        </div>
-      `;
+    const { accessToken, refreshToken } = generateTokens(user._id);
+    await User.findByIdAndUpdate(user._id, { $push: { refreshTokens: refreshToken } });
+    setCookieToken(res, 'accessToken', accessToken, 1);
+    setCookieToken(res, 'refreshToken', refreshToken, 7);
 
-      await transporter.sendMail({
-        to: user.email,
-        subject: 'ZenFlow - Registration Received (Pending HR Approval)',
-        html: emailHtml,
-      });
-    } catch (emailErr) {
-      console.error('[Email Error]: Failed to send registration email:', emailErr.message);
-    }
+    await logActivity(user._id, 'Register Account', `Registered new ${user.role} user account: ${user.name} (${user.employeeId})`);
 
-    await logActivity(user._id, 'Register Request', `Employee registration request submitted for ${user.name} (${user.employeeId})`);
+    user.password = undefined;
 
     res.status(201).json({
       success: true,
-      message: 'Your registration request has been submitted successfully. Your account is currently awaiting HR approval.',
-      employee: {
-        id: user._id,
-        name: user.name,
-        employeeId: user.employeeId,
-        email: user.email,
-        status: user.status,
-      },
+      message: 'Account created successfully!',
+      token: accessToken,
+      user,
     });
   } catch (error) {
     next(error);
@@ -186,12 +181,12 @@ exports.verifyEmail = async (req, res, next) => {
   }
 };
 
-// @desc    Login user
+// @desc    Login user with Role Verification
 // @route   POST /api/auth/login
 // @access  Public
 exports.login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
@@ -203,20 +198,16 @@ exports.login = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
-    // Check account status & approval
-    if (user.status === 'Pending') {
-      return res.status(403).json({ success: false, message: 'Your account is awaiting HR approval.' });
-    }
-
-    if (user.status === 'Rejected') {
-      return res.status(403).json({
+    // Role Verification
+    if (role && user.role !== role) {
+      return res.status(400).json({
         success: false,
-        message: `Your registration request has been rejected.${user.rejectionReason ? ' Reason: ' + user.rejectionReason : ''}`,
+        message: `Selected role (${role}) does not match your registered account role (${user.role}).`,
       });
     }
 
-    if (user.status === 'Inactive' || user.status === 'Suspended') {
-      return res.status(403).json({ success: false, message: 'Your account has been disabled.' });
+    if (user.status !== 'Active') {
+      return res.status(403).json({ success: false, message: 'Your account is disabled or inactive.' });
     }
 
     const { accessToken, refreshToken } = generateTokens(user._id);
@@ -228,7 +219,7 @@ exports.login = async (req, res, next) => {
     setCookieToken(res, 'accessToken', accessToken, 1);
     setCookieToken(res, 'refreshToken', refreshToken, 7);
 
-    await logActivity(user._id, 'User Login', 'User logged in successfully');
+    await logActivity(user._id, 'User Login', `User ${user.name} (${user.role}) logged in successfully`);
 
     user.password = undefined;
 

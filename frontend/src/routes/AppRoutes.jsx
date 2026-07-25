@@ -51,6 +51,10 @@ const AppRoutes = () => {
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/admin/dashboard" element={<RoleRoute roles={['Super Admin']}><Dashboard /></RoleRoute>} />
+            <Route path="/hr/dashboard" element={<RoleRoute roles={['Super Admin', 'HR Admin']}><Dashboard /></RoleRoute>} />
+            <Route path="/manager/dashboard" element={<RoleRoute roles={['Super Admin', 'HR Admin', 'Project Manager']}><Dashboard /></RoleRoute>} />
+            <Route path="/employee/dashboard" element={<Dashboard />} />
             
             {/* Employee Directory & Registration Requests */}
             <Route path="/employees" element={<EmployeeDirectory />} />
