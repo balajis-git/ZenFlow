@@ -77,6 +77,7 @@ const seedDatabase = async () => {
       joiningDate: new Date('2024-03-15'),
       phone: '+1 (555) 019-9001',
       emailVerified: true,
+      profileImage: 'http://localhost:5000/uploads/male_employee_photo.jpg',
       skills: ['Talent Acquisition', 'Operations', 'Compliance'],
     });
 
@@ -91,6 +92,7 @@ const seedDatabase = async () => {
       joiningDate: new Date('2024-02-01'),
       phone: '+1 (555) 019-9002',
       emailVerified: true,
+      profileImage: 'http://localhost:5000/uploads/male_employee_photo.jpg',
       skills: ['Project Management', 'Agile', 'Scrum', 'Risk Mitigation'],
     });
 
@@ -105,6 +107,7 @@ const seedDatabase = async () => {
       joiningDate: new Date('2024-04-20'),
       phone: '+1 (555) 019-9003',
       emailVerified: true,
+      profileImage: 'http://localhost:5000/uploads/male_employee_photo.jpg',
       skills: ['React', 'Redux', 'CSS Grid', 'Tailwind', 'JavaScript'],
     });
 

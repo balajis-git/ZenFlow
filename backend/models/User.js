@@ -58,7 +58,7 @@ const userSchema = new mongoose.Schema(
     ],
     profileImage: {
       type: String,
-      default: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80',
+      default: 'http://localhost:5000/uploads/male_employee_photo.jpg',
     },
     resumeUrl: {
       type: String,
