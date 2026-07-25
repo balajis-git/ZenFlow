@@ -7,6 +7,7 @@ const DashboardLayout = lazy(() => import('../layouts/DashboardLayout'));
 
 // Guest Views
 const Login = lazy(() => import('../pages/auth/Login'));
+const Register = lazy(() => import('../pages/auth/Register'));
 const ForgotPassword = lazy(() => import('../pages/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('../pages/auth/ResetPassword'));
 
@@ -14,6 +15,7 @@ const ResetPassword = lazy(() => import('../pages/auth/ResetPassword'));
 const Dashboard = lazy(() => import('../pages/Dashboard'));
 const EmployeeDirectory = lazy(() => import('../pages/employees/EmployeeDirectory'));
 const EmployeeProfile = lazy(() => import('../pages/employees/EmployeeProfile'));
+const PendingRegistrations = lazy(() => import('../pages/employees/PendingRegistrations'));
 const Departments = lazy(() => import('../pages/departments/Departments'));
 const Projects = lazy(() => import('../pages/projects/Projects'));
 const ProjectDetails = lazy(() => import('../pages/projects/ProjectDetails'));
@@ -40,6 +42,7 @@ const AppRoutes = () => {
         {/* Public Guest Routes */}
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
@@ -49,9 +52,17 @@ const AppRoutes = () => {
           <Route element={<DashboardLayout />}>
             <Route path="/" element={<Dashboard />} />
             
-            {/* Employee Directory: HR and PM see list, Employees see directory list too */}
+            {/* Employee Directory & Registration Requests */}
             <Route path="/employees" element={<EmployeeDirectory />} />
             <Route path="/employees/:id" element={<EmployeeProfile />} />
+            <Route
+              path="/registration-requests"
+              element={
+                <RoleRoute roles={['Super Admin', 'HR Admin']}>
+                  <PendingRegistrations />
+                </RoleRoute>
+              }
+            />
             
             {/* Departments: HR Admin and Super Admin can manage */}
             <Route path="/departments" element={<Departments />} />

@@ -60,14 +60,29 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: 'http://localhost:5000/uploads/male_employee_avatar.jpg',
     },
+    employeeId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      index: true,
+    },
     resumeUrl: {
       type: String,
       default: null,
     },
     status: {
       type: String,
-      enum: ['Active', 'Inactive', 'Suspended'],
-      default: 'Active',
+      enum: ['Pending', 'Active', 'Inactive', 'Rejected', 'Suspended'],
+      default: 'Pending',
+    },
+    isApproved: {
+      type: Boolean,
+      default: false,
+    },
+    rejectionReason: {
+      type: String,
+      default: null,
     },
     emailVerified: {
       type: Boolean,

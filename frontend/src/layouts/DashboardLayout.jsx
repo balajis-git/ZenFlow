@@ -19,6 +19,7 @@ import {
   Building2,
   Search,
   Activity,
+  UserCheck,
 } from 'lucide-react';
 import { logout } from '../redux/slices/authSlice';
 import { useGetTodayStatusQuery, useClockInMutation, useClockOutMutation } from '../redux/api/attendanceApi';
@@ -80,6 +81,7 @@ const DashboardLayout = () => {
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard, roles: ['Super Admin', 'HR Admin', 'Project Manager', 'Employee'] },
     { name: 'Employees', path: '/employees', icon: Users, roles: ['Super Admin', 'HR Admin', 'Project Manager', 'Employee'] },
+    { name: 'Registration Requests', path: '/registration-requests', icon: UserCheck, roles: ['Super Admin', 'HR Admin'] },
     { name: 'Departments', path: '/departments', icon: Building2, roles: ['Super Admin', 'HR Admin'] },
     { name: 'Projects', path: '/projects', icon: FolderGit2, roles: ['Super Admin', 'HR Admin', 'Project Manager', 'Employee'] },
     { name: 'Tasks & Kanban', path: '/tasks', icon: CheckSquare, roles: ['Super Admin', 'HR Admin', 'Project Manager', 'Employee'] },

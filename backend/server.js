@@ -90,6 +90,7 @@ app.use('/uploads', express.static(path.join(__dirname, './uploads')));
 
 // Mount API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/employees', employeeRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/projects', projectRoutes);

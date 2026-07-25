@@ -106,7 +106,14 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="mt-8 text-center text-xs text-slate-500">
+        <div className="mt-4 text-center text-xs text-slate-400">
+          Don't have an account?{' '}
+          <Link to="/register" className="font-semibold text-brand-400 hover:text-brand-300 hover:underline">
+            Create an Account / Sign Up
+          </Link>
+        </div>
+
+        <div className="mt-6 text-center text-xs text-slate-500">
           <p>Demo Login Details:</p>
           <div className="mt-2 grid grid-cols-2 gap-2 text-[10px] text-slate-400 bg-slate-950/20 p-2.5 rounded-xl border border-slate-800/30">
             <div>Admin: admin@workflowx.com / Admin123</div>

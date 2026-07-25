@@ -58,6 +58,44 @@ export const employeeApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: [{ type: 'User', id: 'LIST' }, 'Department'],
     }),
+    getPendingUsers: builder.query({
+      query: (params) => {
+        let queryString = '';
+        if (params) {
+          const searchParams = new URLSearchParams();
+          Object.keys(params).forEach((key) => {
+            if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+              searchParams.append(key, params[key]);
+            }
+          });
+          queryString = `?${searchParams.toString()}`;
+        }
+        return {
+          url: `/admin/pending-users${queryString}`,
+          method: 'GET',
+        };
+      },
+      providesTags: ['PendingUsers'],
+    }),
+    approveUser: builder.mutation({
+      query: (id) => ({
+        url: `/admin/approve/${id}`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['PendingUsers', { type: 'User', id: 'LIST' }, 'Department'],
+    }),
+    rejectUser: builder.mutation({
+      query: ({ id, reason }) => ({
+        url: `/admin/reject/${id}`,
+        method: 'PUT',
+        body: { reason },
+      }),
+      invalidatesTags: ['PendingUsers', { type: 'User', id: 'LIST' }],
+    }),
+    getRegistrationStats: builder.query({
+      query: () => '/admin/registrations',
+      providesTags: ['PendingUsers'],
+    }),
   }),
 });
 
@@ -67,4 +105,8 @@ export const {
   useCreateEmployeeMutation,
   useUpdateEmployeeMutation,
   useDeleteEmployeeMutation,
+  useGetPendingUsersQuery,
+  useApproveUserMutation,
+  useRejectUserMutation,
+  useGetRegistrationStatsQuery,
 } = employeeApi;

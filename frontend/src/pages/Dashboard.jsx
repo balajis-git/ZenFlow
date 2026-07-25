@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { useGetDashboardAnalyticsQuery } from '../redux/api/reportApi';
+import { useGetPendingUsersQuery } from '../redux/api/employeeApi';
 import {
   useGetTodayStatusQuery,
   useClockInMutation,
@@ -92,8 +93,37 @@ const Dashboard = () => {
     );
   }
 
+  const { data: pendingData } = useGetPendingUsersQuery(undefined, {
+    skip: user?.role !== 'Super Admin' && user?.role !== 'HR Admin',
+  });
+  const pendingCount = pendingData?.pendingUsers?.length || 0;
+
   return (
     <div className="space-y-8">
+      {/* Pending Registrations Alert Banner for HR / Admin */}
+      {(user?.role === 'Super Admin' || user?.role === 'HR Admin') && pendingCount > 0 && (
+        <div className="glass border border-amber-500/30 bg-amber-500/10 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-500 font-bold">
+              <Clock size={20} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-800 dark:text-white">
+                {pendingCount} Employee Registration Request{pendingCount > 1 ? 's' : ''} Awaiting Approval
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                New employees have registered and are waiting for your review.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/registration-requests')}
+            className="px-4 py-2 text-xs font-bold rounded-xl bg-amber-500 text-white shadow-md shadow-amber-500/20 hover:bg-amber-600 transition-all whitespace-nowrap"
+          >
+            Review Requests →
+          </button>
+        </div>
+      )}
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>

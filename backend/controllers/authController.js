@@ -35,45 +35,119 @@ const setCookieToken = (res, tokenName, token, days) => {
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, role, designation, salary } = req.body;
+    const {
+      name,
+      employeeId,
+      email,
+      phone,
+      password,
+      confirmPassword,
+      role,
+      department,
+      designation,
+      skills,
+      experience,
+      joiningDate,
+    } = req.body;
 
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ success: false, message: 'User already exists with this email' });
+    if (password && confirmPassword && password !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'Passwords do not match' });
     }
 
-    const verificationToken = crypto.randomBytes(32).toString('hex');
+    // Password Validation: min 8 chars, uppercase, lowercase, number, special char
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+      });
+    }
+
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      return res.status(400).json({ success: false, message: 'User already exists with this email address' });
+    }
+
+    // Handle Employee ID
+    let finalEmpId = employeeId;
+    if (finalEmpId) {
+      const empIdExists = await User.findOne({ employeeId: finalEmpId });
+      if (empIdExists) {
+        return res.status(400).json({ success: false, message: 'Employee ID already exists' });
+      }
+    } else {
+      const count = await User.countDocuments();
+      finalEmpId = `EMP-${1000 + count + 1}`;
+    }
+
+    // Process file uploads if present
+    let profileImage = undefined;
+    let resumeUrl = undefined;
+    if (req.files) {
+      if (req.files.profileImage) profileImage = req.files.profileImage[0].path;
+      if (req.files.resume) resumeUrl = req.files.resume[0].path;
+    }
 
     const user = await User.create({
       name,
+      employeeId: finalEmpId,
       email,
+      phone,
       password,
       role: role || 'Employee',
-      designation,
-      salary,
-      verificationToken,
+      department: department || null,
+      designation: designation || 'Team Member',
+      skills: skills ? (typeof skills === 'string' ? JSON.parse(skills) : skills) : [],
+      experience: experience ? (typeof experience === 'string' ? JSON.parse(experience) : experience) : [],
+      joiningDate: joiningDate || Date.now(),
+      profileImage,
+      resumeUrl,
+      status: 'Pending',
+      isApproved: false,
+      emailVerified: false,
     });
 
-    // Send email verification link
-    const verificationUrl = `${req.protocol}://${req.get('host')}/api/auth/verify-email?token=${verificationToken}`;
-    const emailHtml = `
-      <h1>Verify your Email</h1>
-      <p>Thank you for registering on ZenFlow. Please click the link below to verify your email address:</p>
-      <a href="${verificationUrl}" target="_blank">Verify Email Address</a>
-      <p>If you did not request this, please ignore this email.</p>
-    `;
+    // Send Registration Submitted Notification Email
+    try {
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; background-color: #0f172a; padding: 40px; color: #f8fafc;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 16px; padding: 32px; border: 1px solid #334155;">
+            <div style="text-align: center; margin-bottom: 24px;">
+              <span style="font-size: 28px; font-weight: 900; color: #3b82f6;">ZenFlow</span>
+              <p style="color: #94a3b8; font-size: 14px; margin-top: 4px;">Enterprise Workforce Platform</p>
+            </div>
+            <h2 style="color: #ffffff; font-size: 20px; margin-bottom: 12px;">Registration Submitted</h2>
+            <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6;">Hi <strong>${user.name}</strong>,</p>
+            <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6;">Thank you for registering on ZenFlow. Your employee account (ID: <strong>${user.employeeId}</strong>) has been submitted successfully and is currently <strong>awaiting approval by HR Admin</strong>.</p>
+            <div style="background-color: #0f172a; border-radius: 12px; padding: 16px; margin: 24px 0; border: 1px solid #334155; text-align: center;">
+              <span style="color: #fbbf24; font-weight: bold; font-size: 14px;">Status: Awaiting HR Approval</span>
+            </div>
+            <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 32px;">© 2026 ZenFlow Platform. Where Teams Work Better.</p>
+          </div>
+        </div>
+      `;
 
-    await transporter.sendMail({
-      to: user.email,
-      subject: 'ZenFlow - Email Verification',
-      html: emailHtml,
-    });
+      await transporter.sendMail({
+        to: user.email,
+        subject: 'ZenFlow - Registration Received (Pending HR Approval)',
+        html: emailHtml,
+      });
+    } catch (emailErr) {
+      console.error('[Email Error]: Failed to send registration email:', emailErr.message);
+    }
 
-    await logActivity(user._id, 'Register Account', 'Registered new user account successfully');
+    await logActivity(user._id, 'Register Request', `Employee registration request submitted for ${user.name} (${user.employeeId})`);
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully. A verification link has been sent to your email.',
+      message: 'Your registration request has been submitted successfully. Your account is currently awaiting HR approval.',
+      employee: {
+        id: user._id,
+        name: user.name,
+        employeeId: user.employeeId,
+        email: user.email,
+        status: user.status,
+      },
     });
   } catch (error) {
     next(error);
@@ -129,8 +203,20 @@ exports.login = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
-    if (user.status !== 'Active') {
-      return res.status(403).json({ success: false, message: 'Your account is suspended or inactive' });
+    // Check account status & approval
+    if (user.status === 'Pending') {
+      return res.status(403).json({ success: false, message: 'Your account is awaiting HR approval.' });
+    }
+
+    if (user.status === 'Rejected') {
+      return res.status(403).json({
+        success: false,
+        message: `Your registration request has been rejected.${user.rejectionReason ? ' Reason: ' + user.rejectionReason : ''}`,
+      });
+    }
+
+    if (user.status === 'Inactive' || user.status === 'Suspended') {
+      return res.status(403).json({ success: false, message: 'Your account has been disabled.' });
     }
 
     const { accessToken, refreshToken } = generateTokens(user._id);
