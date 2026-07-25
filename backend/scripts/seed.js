@@ -1,3 +1,5 @@
+require('dns').setServers(['8.8.8.8', '1.1.1.1']);
+require('dotenv').config({ path: './.env' });
 require('dotenv').config({ path: '../.env' });
 const mongoose = require('mongoose');
 const User = require('../models/User');
@@ -12,7 +14,7 @@ const Comment = require('../models/Comment');
 const Notification = require('../models/Notification');
 const ActivityLog = require('../models/ActivityLog');
 
-const dbUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/zenflow';
+const dbUri = process.env.MONGODB_URI || 'mongodb+srv://balajisenthil1955_db_user:YtsohyrywohRLhtu@cluster0.qhrelhs.mongodb.net/zenflow?retryWrites=true&w=majority&appName=Cluster0';
 
 const seedDatabase = async () => {
   try {
