@@ -32,6 +32,9 @@ const EmployeeProfile = () => {
 
   // Edit Mode State
   const [isEditing, setIsEditing] = useState(false);
+  const [name, setName] = useState('');
+  const [profileImage, setProfileImage] = useState('');
+  const [profileFile, setProfileFile] = useState(null);
   const [phone, setPhone] = useState('');
   const [skills, setSkills] = useState('');
   const [emergencyName, setEmergencyName] = useState('');
@@ -40,6 +43,8 @@ const EmployeeProfile = () => {
 
   const startEdit = () => {
     if (employee) {
+      setName(employee.name || '');
+      setProfileImage(employee.profileImage || '');
       setPhone(employee.phone || '');
       setSkills(employee.skills ? employee.skills.join(', ') : '');
       setEmergencyName(employee.emergencyContact?.name || '');
@@ -52,6 +57,12 @@ const EmployeeProfile = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     const formData = new FormData();
+    formData.append('name', name);
+    if (profileFile) {
+      formData.append('profileImage', profileFile);
+    } else if (profileImage) {
+      formData.append('profileImage', profileImage);
+    }
     formData.append('phone', phone);
     formData.append('skills', JSON.stringify(skills.split(',').map((s) => s.trim())));
     formData.append(
@@ -273,6 +284,40 @@ const EmployeeProfile = () => {
           </div>
 
           <form onSubmit={handleUpdate} className="space-y-4 max-w-2xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Full Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full rounded-xl bg-slate-100/50 dark:bg-darkBg border-0 py-2.5 px-4 text-sm dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500/20"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Profile Image URL</label>
+                <input
+                  type="text"
+                  value={profileImage}
+                  onChange={(e) => setProfileImage(e.target.value)}
+                  placeholder="https://images.unsplash.com/photo-..."
+                  className="w-full rounded-xl bg-slate-100/50 dark:bg-darkBg border-0 py-2.5 px-4 text-sm dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500/20"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Upload New Profile Photo (Optional File)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setProfileFile(e.target.files[0])}
+                className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-500/10 file:text-brand-500 hover:file:bg-brand-500/20"
+              />
+            </div>
+
             <div className="space-y-1">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Phone Number</label>
               <input

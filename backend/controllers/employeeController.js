@@ -215,7 +215,10 @@ exports.updateEmployee = async (req, res, next) => {
       }
     });
 
-    // Handle files if uploaded
+    // Handle files if uploaded or string image URL
+    if (req.body.profileImage && typeof req.body.profileImage === 'string') {
+      fieldsToUpdate.profileImage = req.body.profileImage;
+    }
     if (req.files) {
       if (req.files.profileImage) {
         fieldsToUpdate.profileImage = req.files.profileImage[0].path;
