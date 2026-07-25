@@ -53,65 +53,108 @@ const seedDatabase = async () => {
 
     console.log('[Seed] Departments created. Seeding default user roles...');
 
-    const superAdmin = await User.create({
-      name: 'John Doe (Admin)',
-      email: 'admin@workflowx.com',
-      password: 'Admin123',
-      role: 'Super Admin',
-      department: depExec._id,
-      designation: 'CEO / Chief Executive',
-      salary: 180000,
-      joiningDate: new Date('2024-01-10'),
-      phone: '+1 (555) 019-9000',
-      emailVerified: true,
-      profileImage: 'http://localhost:5000/uploads/male_employee_avatar.jpg',
-      skills: ['Leadership', 'System Architecture', 'Governance'],
-    });
+    // 2. Default System Admin Accounts
+    const existingSuperAdmin = await User.findOne({ email: 'admin@zenflow.com' });
+    if (!existingSuperAdmin) {
+      await User.create({
+        name: 'Super Admin',
+        employeeId: 'EMP-0001',
+        email: 'admin@zenflow.com',
+        password: 'Admin@123',
+        role: 'Super Admin',
+        department: depExec._id,
+        designation: 'Chief Executive Officer',
+        salary: 180000,
+        phone: '9876543210',
+        status: 'Active',
+        isApproved: true,
+        emailVerified: true,
+        profileImage: 'http://localhost:5000/uploads/male_employee_avatar.jpg',
+      });
+    }
 
-    const hrAdmin = await User.create({
-      name: 'Jane Smith (HR)',
-      email: 'hr@workflowx.com',
-      password: 'Hradmin123',
-      role: 'HR Admin',
-      department: depHR._id,
-      designation: 'Director of HR',
-      salary: 95000,
-      joiningDate: new Date('2024-03-15'),
-      phone: '+1 (555) 019-9001',
-      emailVerified: true,
-      profileImage: 'http://localhost:5000/uploads/male_employee_photo.jpg',
-      skills: ['Talent Acquisition', 'Operations', 'Compliance'],
-    });
+    const existingHRAdmin = await User.findOne({ email: 'hr@zenflow.com' });
+    if (!existingHRAdmin) {
+      await User.create({
+        name: 'HR Admin',
+        employeeId: 'EMP-0002',
+        email: 'hr@zenflow.com',
+        password: 'HR@123',
+        role: 'HR Admin',
+        department: depHR._id,
+        designation: 'HR Director',
+        salary: 95000,
+        phone: '9876543211',
+        status: 'Active',
+        isApproved: true,
+        emailVerified: true,
+        profileImage: 'http://localhost:5000/uploads/male_employee_avatar.jpg',
+      });
+    }
 
-    const projectManager = await User.create({
-      name: 'Alex Johnson (PM)',
-      email: 'pm@workflowx.com',
-      password: 'Project123',
-      role: 'Project Manager',
-      department: depEng._id,
-      designation: 'Lead Project Manager',
-      salary: 110000,
-      joiningDate: new Date('2024-02-01'),
-      phone: '+1 (555) 019-9002',
-      emailVerified: true,
-      profileImage: 'http://localhost:5000/uploads/male_employee_avatar.jpg',
-      skills: ['Project Management', 'Agile', 'Scrum', 'Risk Mitigation'],
-    });
+    const existingPM = await User.findOne({ email: 'pm@zenflow.com' });
+    if (!existingPM) {
+      await User.create({
+        name: 'Project Manager',
+        employeeId: 'EMP-0003',
+        email: 'pm@zenflow.com',
+        password: 'PM@123',
+        role: 'Project Manager',
+        department: depEng._id,
+        designation: 'Lead Project Manager',
+        salary: 110000,
+        phone: '9876543212',
+        status: 'Active',
+        isApproved: true,
+        emailVerified: true,
+        profileImage: 'http://localhost:5000/uploads/male_employee_avatar.jpg',
+      });
+    }
 
-    const employee = await User.create({
-      name: 'Bob Wilson (Dev)',
-      email: 'employee@workflowx.com',
-      password: 'Employee123',
-      role: 'Employee',
-      department: depEng._id,
-      designation: 'Senior Frontend Developer',
-      salary: 85000,
-      joiningDate: new Date('2024-04-20'),
-      phone: '+1 (555) 019-9003',
-      emailVerified: true,
-      profileImage: 'http://localhost:5000/uploads/male_employee_avatar.jpg',
-      skills: ['React', 'Redux', 'CSS Grid', 'Tailwind', 'JavaScript'],
-    });
+    const existingEmp = await User.findOne({ email: 'employee@zenflow.com' });
+    if (!existingEmp) {
+      await User.create({
+        name: 'Senior Employee',
+        employeeId: 'EMP-0004',
+        email: 'employee@zenflow.com',
+        password: 'Employee@123',
+        role: 'Employee',
+        department: depEng._id,
+        designation: 'Senior Full Stack Engineer',
+        salary: 85000,
+        phone: '9876543213',
+        status: 'Active',
+        isApproved: true,
+        emailVerified: true,
+        profileImage: 'http://localhost:5000/uploads/male_employee_avatar.jpg',
+      });
+    }
+
+    // Preserve original legacy admin accounts
+    const legacyAdmin = await User.findOne({ email: 'admin@workflowx.com' });
+    if (!legacyAdmin) {
+      await User.create({
+        name: 'John Doe (Admin)',
+        employeeId: 'EMP-1000',
+        email: 'admin@workflowx.com',
+        password: 'Admin123',
+        role: 'Super Admin',
+        department: depExec._id,
+        designation: 'CEO / Chief Executive',
+        salary: 180000,
+        phone: '+1 (555) 019-9000',
+        status: 'Active',
+        isApproved: true,
+        emailVerified: true,
+        profileImage: 'http://localhost:5000/uploads/male_employee_avatar.jpg',
+      });
+    }
+
+    // Assign references for project and task seeding
+    const superAdmin = await User.findOne({ role: 'Super Admin' });
+    const hrAdmin = await User.findOne({ role: 'HR Admin' });
+    const projectManager = await User.findOne({ role: 'Project Manager' });
+    const employee = await User.findOne({ role: 'Employee' });
 
     depHR.manager = hrAdmin._id;
     depHR.employeesCount = 1;

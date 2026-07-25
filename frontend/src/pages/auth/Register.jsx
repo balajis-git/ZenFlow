@@ -1,24 +1,28 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useRegisterMutation, useLoginMutation } from '../../redux/api/authApi';
+import { useRegisterMutation } from '../../redux/api/authApi';
+import { useGetDepartmentsQuery } from '../../redux/api/departmentApi';
 import { useDispatch } from 'react-redux';
-import { setCredentials } from '../../redux/slices/authSlice';
-import { ShieldCheck, Mail, Lock, User, Briefcase, UserCheck, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, UserCheck } from 'lucide-react';
 
 const Register = () => {
   const [name, setName] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [department, setDepartment] = useState('');
+  const [designation, setDesignation] = useState('');
+  const [skills, setSkills] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('Employee');
-  const [designation, setDesignation] = useState('');
+
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  const [registerUser, { isLoading: isRegistering }] = useRegisterMutation();
-  const [loginUser, { isLoading: isLoggingIn }] = useLoginMutation();
+  const [registerUser, { isLoading }] = useRegisterMutation();
+  const { data: deptData } = useGetDepartmentsQuery();
+  const departments = deptData?.departments || [];
 
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -27,161 +31,187 @@ const Register = () => {
     setSuccessMsg('');
 
     if (password !== confirmPassword) {
-      setErrorMsg('Passwords do not match');
+      setErrorMsg('Passwords do not match.');
+      return;
+    }
+
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (phone && cleanPhone.length !== 10) {
+      setErrorMsg('Phone number must be exactly 10 digits.');
       return;
     }
 
     try {
-      // 1. Call Register API
       await registerUser({
         name,
+        employeeId: employeeId || undefined,
         email,
+        phone: cleanPhone,
+        department: department || undefined,
+        designation: designation || undefined,
+        skills: skills ? skills.split(',').map((s) => s.trim()) : [],
+        role: 'Employee', // Automatically set to Employee
         password,
-        role,
-        designation: designation || 'Team Member',
+        confirmPassword,
       }).unwrap();
 
-      setSuccessMsg('Account created successfully! Logging you in...');
+      setSuccessMsg('Employee account created successfully. Please login using your Email and Password.');
 
-      // 2. Auto Login after registration
-      try {
-        const loginRes = await loginUser({ email, password }).unwrap();
-        dispatch(setCredentials(loginRes));
-        navigate('/');
-      } catch (loginErr) {
-        // If email verification is required or auto-login pending, redirect to login page
-        setTimeout(() => {
-          navigate('/login');
-        }, 1500);
-      }
+      setTimeout(() => {
+        navigate('/login', {
+          state: {
+            successNotice: 'Employee account created successfully. Please login using your Email and Password.',
+          },
+        });
+      }, 1500);
     } catch (err) {
-      setErrorMsg(err.data?.message || 'Registration failed. Please try again.');
+      setErrorMsg(err.data?.message || 'Registration failed. Please check your information.');
     }
   };
 
-  const isLoading = isRegistering || isLoggingIn;
-
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-slate-900 p-4 font-sans text-slate-100 relative overflow-hidden">
-      {/* Background Gradients */}
-      <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-brand-500/20 blur-3xl"></div>
-      <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-purple-500/20 blur-3xl"></div>
+    <div className="flex min-h-screen w-full items-center justify-center bg-slate-950 p-4 font-sans text-slate-100 relative overflow-hidden">
+      {/* Background Glow FX */}
+      <div className="absolute -top-40 -left-40 h-[30rem] w-[30rem] rounded-full bg-brand-600/20 blur-[120px] pointer-events-none"></div>
+      <div className="absolute -bottom-40 -right-40 h-[30rem] w-[30rem] rounded-full bg-purple-600/20 blur-[120px] pointer-events-none"></div>
 
-      <div className="z-10 w-full max-w-md space-y-6 rounded-2xl border border-slate-800 bg-slate-950/80 p-8 shadow-2xl backdrop-blur-xl">
-        {/* Header */}
-        <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 to-purple-600 shadow-lg shadow-brand-500/30">
-            <span className="text-2xl font-black text-white">Z</span>
+      <div className="z-10 w-full max-w-xl space-y-6 rounded-3xl border border-slate-800/80 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-2xl transition-all">
+        {/* Brand Header */}
+        <div className="text-center space-y-2">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-brand-600 via-purple-600 to-cyan-500 shadow-xl shadow-brand-500/30">
+            <span className="text-3xl font-black text-white tracking-tighter">Z</span>
           </div>
-          <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-white">Create your account</h2>
-          <p className="mt-1 text-xs text-slate-400">
-            Join <span className="font-semibold text-brand-400">ZenFlow</span> workforce & collaboration platform
-          </p>
+          <h1 className="text-3xl font-black tracking-tight text-white">ZENFLOW</h1>
+          <p className="text-sm font-bold text-slate-300">Create Employee Account</p>
+          <p className="text-xs text-slate-500">Employee Registration System</p>
         </div>
 
-        {/* Error Alert */}
+        {/* Alerts */}
         {errorMsg && (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs text-red-400">
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs text-red-400 font-medium text-center">
             {errorMsg}
           </div>
         )}
-
-        {/* Success Alert */}
         {successMsg && (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-400">
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-400 font-medium text-center">
             {successMsg}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Full Name */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300">Full Name</label>
-            <div className="relative">
-              <User className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
+          {/* Full Name & Employee ID */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-300">Full Name</label>
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/60 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                placeholder="Sarah Connor"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-300">Employee ID</label>
+              <input
+                type="text"
+                value={employeeId}
+                onChange={(e) => setEmployeeId(e.target.value)}
+                placeholder="EMP-1005"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
               />
             </div>
           </div>
 
-          {/* Email Address */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300">Email Address</label>
-            <div className="relative">
-              <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
+          {/* Email & Phone */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-300">Email Address</label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/60 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                placeholder="sarah@company.com"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-300">Phone Number (10 digits)</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="9876543210"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
               />
             </div>
           </div>
 
-          {/* Role & Designation */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Department & Designation */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-300">System Role</label>
+              <label className="text-xs font-bold text-slate-300">Department</label>
               <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/60 py-2.5 px-3 text-xs text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-white focus:border-brand-500 focus:outline-none"
               >
-                <option value="Employee">Employee</option>
-                <option value="Project Manager">Project Manager</option>
-                <option value="HR Admin">HR Admin</option>
-                <option value="Super Admin">Super Admin</option>
+                <option value="">Select Department</option>
+                {departments.map((d) => (
+                  <option key={d._id} value={d._id}>
+                    {d.name}
+                  </option>
+                ))}
               </select>
             </div>
-
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-300">Designation</label>
+              <label className="text-xs font-bold text-slate-300">Designation</label>
               <input
                 type="text"
                 value={designation}
                 onChange={(e) => setDesignation(e.target.value)}
-                placeholder="Software Dev"
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/60 py-2.5 px-3 text-xs text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                placeholder="Software Engineer"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
               />
             </div>
           </div>
 
-          {/* Password */}
+          {/* Skills */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
+            <label className="text-xs font-bold text-slate-300">Skills (Comma-separated)</label>
+            <input
+              type="text"
+              value={skills}
+              onChange={(e) => setSkills(e.target.value)}
+              placeholder="React, Node.js, Express, MongoDB"
+              className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
+            />
+          </div>
+
+          {/* Password & Confirm Password */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-300">Password</label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/60 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
               />
             </div>
-          </div>
-
-          {/* Confirm Password */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-300">Confirm Password</label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-300">Confirm Password</label>
               <input
                 type="password"
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-slate-800 bg-slate-900/60 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 px-3.5 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
               />
             </div>
           </div>
@@ -190,26 +220,24 @@ const Register = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-purple-600 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/25 transition-all hover:from-brand-500 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 via-purple-600 to-cyan-500 py-3 text-sm font-extrabold text-white shadow-lg shadow-brand-500/25 transition-all hover:opacity-90 focus:outline-none disabled:opacity-50 mt-6"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                Creating Account...
+                Creating Employee Account...
               </span>
             ) : (
               <span className="flex items-center gap-2">
-                Create Account <ArrowRight size={16} />
+                Create Employee Account <ArrowRight size={16} />
               </span>
             )}
           </button>
         </form>
 
-        {/* Footer Link to Login */}
-        <div className="pt-2 text-center text-xs text-slate-400">
-          Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-brand-400 hover:text-brand-300 hover:underline">
-            Sign In
+        <div className="text-center pt-2 border-t border-slate-800/80">
+          <Link to="/login" className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition">
+            <ArrowLeft size={14} /> Back to Login
           </Link>
         </div>
       </div>
