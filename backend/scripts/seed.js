@@ -62,6 +62,7 @@ const seedDatabase = async () => {
       joiningDate: new Date('2024-01-10'),
       phone: '+1 (555) 019-9000',
       emailVerified: true,
+      profileImage: 'http://localhost:5000/uploads/admin_profile_photo.jpg',
       skills: ['Leadership', 'System Architecture', 'Governance'],
     });
 
