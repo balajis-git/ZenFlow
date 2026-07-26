@@ -3,12 +3,11 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useLoginMutation } from '../../redux/api/authApi';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../../redux/slices/authSlice';
-import { Mail, Lock, UserCheck, ArrowRight, UserPlus } from 'lucide-react';
+import { Mail, Lock, ArrowRight, UserPlus } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('Super Admin');
 
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -48,23 +47,15 @@ const Login = () => {
       const res = await loginUser({
         email,
         password,
-        role,
       }).unwrap();
 
       dispatch(setCredentials(res));
 
-      const targetPath = getRoleDashboardPath(res.user?.role || role);
+      const targetPath = getRoleDashboardPath(res.user?.role);
       navigate(targetPath);
     } catch (err) {
-      setErrorMsg(err.data?.message || 'Invalid email, password, or role selection.');
+      setErrorMsg(err.data?.message || 'Invalid email or password. Please try again.');
     }
-  };
-
-  const fillDemoAccount = (roleName, demoEmail, demoPass) => {
-    setRole(roleName);
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setErrorMsg('');
   };
 
   return (
@@ -108,7 +99,7 @@ const Login = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@zenflow.com"
+                placeholder="you@company.com"
                 className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             </div>
@@ -135,24 +126,6 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Role Dropdown */}
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-300">Role</label>
-            <div className="relative">
-              <UserCheck className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950/60 py-2.5 pl-10 pr-4 text-sm text-white focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              >
-                <option value="Super Admin">▼ Super Admin</option>
-                <option value="HR Admin">▼ HR Admin</option>
-                <option value="Project Manager">▼ Project Manager</option>
-                <option value="Employee">▼ Employee</option>
-              </select>
-            </div>
-          </div>
-
           {/* Login Button */}
           <button
             type="submit"
@@ -172,7 +145,7 @@ const Login = () => {
           </button>
         </form>
 
-        {/* Divider & Create Employee Account Link */}
+        {/* Divider & Create Employee Account Button */}
         <div className="relative my-6 text-center">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-slate-800/80"></div>
@@ -189,41 +162,6 @@ const Login = () => {
         >
           <UserPlus size={15} className="text-brand-400" /> Create Employee Account
         </button>
-
-        {/* Quick System Credentials Bar */}
-        <div className="mt-6 border-t border-slate-800/80 pt-4 text-center">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Default Admin Quick Fill</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-            <button
-              type="button"
-              onClick={() => fillDemoAccount('Super Admin', 'admin@zenflow.com', 'Admin@123')}
-              className="px-2 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800 text-[10px] font-bold text-brand-400 hover:bg-brand-500/10 transition-all"
-            >
-              Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemoAccount('HR Admin', 'hr@zenflow.com', 'HR@123')}
-              className="px-2 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800 text-[10px] font-bold text-purple-400 hover:bg-purple-500/10 transition-all"
-            >
-              HR Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemoAccount('Project Manager', 'pm@zenflow.com', 'PM@123')}
-              className="px-2 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800 text-[10px] font-bold text-cyan-400 hover:bg-cyan-500/10 transition-all"
-            >
-              PM
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemoAccount('Employee', 'employee@zenflow.com', 'Employee@123')}
-              className="px-2 py-1.5 rounded-lg bg-slate-950/80 border border-slate-800 text-[10px] font-bold text-emerald-400 hover:bg-emerald-500/10 transition-all"
-            >
-              Employee
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
