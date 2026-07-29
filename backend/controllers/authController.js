@@ -228,12 +228,14 @@ exports.login = async (req, res, next) => {
       }
     }
 
-    // Ensure status is active
-    if (user.status !== 'Active') {
-      user.status = 'Active';
-      user.isApproved = true;
-      await user.save();
-    }
+    // Generate JWT Tokens & Cookies
+    const { accessToken, refreshToken } = generateTokens(user._id);
+    await User.findByIdAndUpdate(user._id, { $push: { refreshTokens: refreshToken } });
+
+    setCookieToken(res, 'accessToken', accessToken, 1);
+    setCookieToken(res, 'refreshToken', refreshToken, 7);
+
+    await logActivity(user._id, 'User Login', `User ${user.name} (${user.role}) logged in successfully`);
 
     user.password = undefined;
 
