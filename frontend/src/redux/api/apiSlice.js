@@ -1,8 +1,16 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { logout, setCredentials } from '../slices/authSlice';
 
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (typeof window !== 'undefined' && window.location.origin.includes('vercel.app')) {
+    return 'https://zenflow-backend.onrender.com/api';
+  }
+  return '/api';
+};
+
 const baseQuery = fetchBaseQuery({
-  baseUrl: '/api',
+  baseUrl: getApiBaseUrl(),
   prepareHeaders: (headers, { getState }) => {
     const token = getState().auth.token;
     if (token) {
